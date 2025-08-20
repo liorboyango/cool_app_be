@@ -39,8 +39,17 @@ app.get('/api/users', (req, res) => {
     res.json([
         { id: 1, name: 'Alice', role: 'admin' },
         { id: 2, name: 'Bob', role: 'user' },
+        { id: 3, name: 'Charlie', role: 'user' },
+        { id: 4, name: 'David', role: 'admin' },
+        { id: 5, name: 'Eve', role: 'user' },
+        { id: 6, name: 'Frank', role: 'moderator' },
+        { id: 7, name: 'Grace', role: 'user' },
+        { id: 8, name: 'Heidi', role: 'admin' },
+        { id: 9, name: 'Ivan', role: 'user' },
+        { id: 10, name: 'Judy', role: 'moderator' },
     ]);
 });
+
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
