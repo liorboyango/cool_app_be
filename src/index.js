@@ -1,12 +1,12 @@
 const express = require('express');
-const cors = require('cors'); // ✅ add this
+const cors = require('cors'); // ✅ addthis
 const app = express();
 const port = 3000;
 
 app.use(cors()); // allow all origins by default
 app.use(express.json()); // Middleware to parse JSON bodies
 
-// -------------------- Basic HTML/Text Routes --------------------
+// -------------------- Basic HTML/TExt Routes --------------------
 
 // Home route
 app.get('/', (req, res) => {
@@ -36,32 +36,21 @@ app.get('/api/status', (req, res) => {
 
 // GET /api/users
 app.get('/api/users', (req, res) => {
-    res.json([
-        { id: 1, name: 'Alice', role: 'admin' },
-        { id: 2, name: 'Bob', role: 'user' },
-    ]);
+    res.json([        { id: 1, name: 'Alice', role: 'admin' },        { id: 2, name: 'Bob', role: 'user' },        { id: 3, name: 'Charlie', role: 'user' },        { id: 4, name: 'David', role: 'admin' },        { id: 5, name: 'Eve', role: 'user' },        { id: 6, name: 'Frank', role: 'moderator' },        { id: 7, name: 'Grace', role: 'user' },        { id: 8, name: 'Hank', role: 'admin' },        { id: 9, name: 'Ivy', role: 'user' },        { id: 10, name: 'Jack', role: 'user' },    ]);
 });
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
     const { name, role } = req.body;
     const newUser = {
-        id: Math.floor(Math.random() * 1000),
-        name,
-        role,
-    };
-    res.status(201).json({
-        message: 'User created successfully',
-        user: newUser,
-    });
+        id: Math.floor(Math.random() * 1000),        name,        role,    };
+    res.status(201).json({        message: 'User created successfully',        user: newUser,    });
 });
 
-// -------------------- 404 Handler --------------------
+// ------------------- 404 Handler --------------------
 app.use((req, res) => {
     res.status(404).json({ error: 'Not Found' });
 });
 
-// -------------------- Start Server --------------------
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-});
+// ------------------- Start Server -------------------
+app.listen(port, () => {    console.log(`Server is running at http://localhost:${port}`); });
