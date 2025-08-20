@@ -36,10 +36,7 @@ app.get('/api/status', (req, res) => {
 
 // GET /api/users
 app.get('/api/users', (req, res) => {
-    res.json([
-        { id: 1, name: 'Alice', role: 'admin' },
-        { id: 2, name: 'Bob', role: 'user' },
-    ]);
+    res.json([        { id: 1, name: 'Alice', role: 'admin' },        { id: 2, name: 'Bob', role: 'user' },        { id: 3, name: 'Charlie', role: 'moderator' },        { id: 4, name: 'David', role: 'user' },        { id: 5, name: 'Eve', role: 'admin' },        { id: 6, name: 'Frank', role: 'user' },        { id: 7, name: 'Grace', role: 'moderator' },        { id: 8, name: 'Hank', role: 'user' },    ]);
 });
 
 // POST /api/users
@@ -56,12 +53,11 @@ app.post('/api/users', (req, res) => {
     });
 });
 
-// -------------------- 404 Handler --------------------
+// ------------------- 404 Handler --------------------
 app.use((req, res) => {
     res.status(404).json({ error: 'Not Found' });
 });
 
-// -------------------- Start Server --------------------
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+// -------------------  Start Server -------------------
+app.listen(3000, () => {    console.log(`Server is running at http://localhost:3000`);
 });
