@@ -6,7 +6,20 @@ const port = 3000;
 app.use(cors()); // allow all origins by default
 app.use(express.json()); // Middleware to parse JSON bodies
 
-// -------------------- Basic HTML/Text Routes --------------------
+let users = [
+        { id: 1, name: 'Alice', role: 'admin' },
+        { id: 2, name: 'Bob', role: 'user' },
+        { id: 3, name: 'Charlie', role: 'user' },
+        { id: 4, name: 'David', role: 'admin' },
+        { id: 5, name: 'Eve', role: 'user' },
+        { id: 6, name: 'Frank', role: 'moderator' },
+        { id: 7, name: 'Grace', role: 'user' },
+        { id: 8, name: 'Hank', role: 'admin' },
+        { id: 9, name: 'Ivy', role: 'user' },
+        { id: 10, name: 'Jack', role: 'user' },
+];
+
+// -------------------- Basic HTML/Text Routes -------------------- 
 
 // Home route
 app.get('/', (req, res) => {
@@ -24,7 +37,7 @@ app.post('/contact', (req, res) => {
     res.send(`Received message from ${name}: ${message}`);
 });
 
-// -------------------- API Routes (JSON) --------------------
+// -------------------- API Routes (JSON) -------------------- 
 
 // GET /api/status
 app.get('/api/status', (req, res) => {
@@ -36,18 +49,7 @@ app.get('/api/status', (req, res) => {
 
 // GET /api/users
 app.get('/api/users', (req, res) => {
-    res.json([
-        { id: 1, name: 'Alice', role: 'admin' },
-        { id: 2, name: 'Bob', role: 'user' },
-        { id: 3, name: 'Charlie', role: 'user' },
-        { id: 4, name: 'David', role: 'admin' },
-        { id: 5, name: 'Eve', role: 'user' },
-        { id: 6, name: 'Frank', role: 'moderator' },
-        { id: 7, name: 'Grace', role: 'user' },
-        { id: 8, name: 'Hank', role: 'admin' },
-        { id: 9, name: 'Ivy', role: 'user' },
-        { id: 10, name: 'Jack', role: 'user' },
-    ]);
+    res.json(users);
 });
 
 // POST /api/users
@@ -58,18 +60,31 @@ app.post('/api/users', (req, res) => {
         name,
         role,
     };
+    users.push(newUser);
     res.status(201).json({
         message: 'User created successfully',
         user: newUser,
     });
 });
 
-// -------------------- 404 Handler --------------------
+// DELETE /api/users/:id
+app.delete('/api/users/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = users.findIndex(u => u.id === id);
+    if (index !== -1) {
+        users.splice(index, 1);
+        res.json({ message: 'User deleted' });
+    } else {
+        res.status(404).json({ error: 'User not found' });
+    }
+});
+
+// -------------------- 404 Handler -------------------- 
 app.use((req, res) => {
     res.status(404).json({ error: 'Not Found' });
 });
 
-// -------------------- Start Server --------------------
+// -------------------- Start Server -------------------- 
 app.listen(port, () => {
-    console.log(`Server is nunning at http://localhost:${port}`);
+    console.log(`Server is running at http://localhost:${port}`);
 });
