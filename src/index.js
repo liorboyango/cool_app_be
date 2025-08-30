@@ -79,6 +79,18 @@ app.delete('/api/users/:id', (req, res) => {
     }
 });
 
+// DELETE /api/users (bulk)
+app.delete('/api/users', (req, res) => {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+        return res.status(400).json({ error: 'ids must be an array' });
+    }
+    const initialLength = users.length;
+    users = users.filter(u => !ids.includes(u.id));
+    const deletedCount = initialLength - users.length;
+    res.json({ message: `Deleted ${deletedCount} users` });
+});
+
 // -------------------- 404 Handler -------------------- 
 app.use((req, res) => {
     res.status(404).json({ error: 'Not Found' });
