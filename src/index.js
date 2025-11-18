@@ -7,16 +7,16 @@ app.use(cors()); // allow all origins by default
 app.use(express.json()); // Middleware to parse JSON bodies
 
 let users = [
-        { id: 1, name: 'Alice', role: 'admin' },
-        { id: 2, name: 'Bob', role: 'user' },
-        { id: 3, name: 'Charlie', role: 'user' },
-        { id: 4, name: 'David', role: 'admin' },
-        { id: 5, name: 'Eve', role: 'user' },
-        { id: 6, name: 'Frank', role: 'moderator' },
-        { id: 7, name: 'Grace', role: 'user' },
-        { id: 8, name: 'Hank', role: 'admin' },
-        { id: 9, name: 'Ivy', role: 'user' },
-        { id: 10, name: 'Jack', role: 'user' },
+        { id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com' },
+        { id: 2, name: 'Bob', role: 'user', email: 'bob@example.com' },
+        { id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com' },
+        { id: 4, name: 'David', role: 'admin', email: 'david@example.com' },
+        { id: 5, name: 'Eve', role: 'user', email: 'eve@example.com' },
+        { id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com' },
+        { id: 7, name: 'Grace', role: 'user', email: 'grace@example.com' },
+        { id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com' },
+        { id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com' },
+        { id: 10, name: 'Jack', role: 'user', email: 'jack@example.com' },
 ];
 
 // -------------------- Basic HTML/Text Routes -------------------- 
@@ -54,16 +54,34 @@ app.get('/api/users', (req, res) => {
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
-    const { name, role } = req.body;
+    const { name, role, email } = req.body;
     const newUser = {
         id: Math.floor(Math.random() * 1000),
         name,
         role,
+        email,
     };
     users.push(newUser);
     res.status(201).json({
         message: 'User created successfully',
         user: newUser,
+    });
+});
+
+// PUT /api/users/:id
+app.put('/api/users/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const index = users.findIndex(u => u.id === id);
+    if (index === -1) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+    const { name, role, email } = req.body;
+    if (name !== undefined) users[index].name = name;
+    if (role !== undefined) users[index].role = role;
+    if (email !== undefined) users[index].email = email;
+    res.json({
+        message: 'User updated successfully',
+        user: users[index],
     });
 });
 
