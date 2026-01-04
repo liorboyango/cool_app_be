@@ -1,9 +1,15 @@
 const express = require('express');
 const cors = require('cors'); // ✅ add this
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-app.use(cors()); // allow all origins by default
+// Enable CORS
+app.use(cors({
+    origin: 'liorboyango.github.io',               // ← use * for development;
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json()); // Middleware to parse JSON bodies
 
 let users = [
@@ -19,7 +25,7 @@ let users = [
         { id: 10, name: 'Jack', role: 'user', email: 'jack@example.com' },
 ];
 
-// -------------------- Basic HTML/Text Routes -------------------- 
+// -------------------- Basic HTML/Text Routes --------------------
 
 // Home route
 app.get('/', (req, res) => {
@@ -37,7 +43,7 @@ app.post('/contact', (req, res) => {
     res.send(`Received message from ${name}: ${message}`);
 });
 
-// -------------------- API Routes (JSON) -------------------- 
+// -------------------- API Routes (JSON) --------------------
 
 // GET /api/status
 app.get('/api/status', (req, res) => {
@@ -109,12 +115,12 @@ app.delete('/api/users', (req, res) => {
     res.json({ message: `Deleted ${deletedCount} users` });
 });
 
-// -------------------- 404 Handler -------------------- 
+// -------------------- 404 Handler --------------------
 app.use((req, res) => {
     res.status(404).json({ error: 'Not Found' });
 });
 
-// -------------------- Start Server -------------------- 
+// -------------------- Start Server --------------------
 app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+    console.log(`Server is running on port ${port}`);
 });
