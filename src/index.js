@@ -4,8 +4,20 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Enable CORS
+const allowedOrigins = [
+    'https://liorboyango.github.io',          // Your project site
+    'http://localhost:3000'                     // For local Flutter web dev
+];
 app.use(cors({
-    origin: 'liorboyango.github.io',               // ← use * for development;
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },              // ← use * for development;
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -13,16 +25,16 @@ app.use(cors({
 app.use(express.json()); // Middleware to parse JSON bodies
 
 let users = [
-        { id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com' },
-        { id: 2, name: 'Bob', role: 'user', email: 'bob@example.com' },
-        { id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com' },
-        { id: 4, name: 'David', role: 'admin', email: 'david@example.com' },
-        { id: 5, name: 'Eve', role: 'user', email: 'eve@example.com' },
-        { id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com' },
-        { id: 7, name: 'Grace', role: 'user', email: 'grace@example.com' },
-        { id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com' },
-        { id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com' },
-        { id: 10, name: 'Jack', role: 'user', email: 'jack@example.com' },
+    {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com'},
+    {id: 2, name: 'Bob', role: 'user', email: 'bob@example.com'},
+    {id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com'},
+    {id: 4, name: 'David', role: 'admin', email: 'david@example.com'},
+    {id: 5, name: 'Eve', role: 'user', email: 'eve@example.com'},
+    {id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com'},
+    {id: 7, name: 'Grace', role: 'user', email: 'grace@example.com'},
+    {id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com'},
+    {id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com'},
+    {id: 10, name: 'Jack', role: 'user', email: 'jack@example.com'},
 ];
 
 // -------------------- Basic HTML/Text Routes --------------------
@@ -39,7 +51,7 @@ app.get('/about', (req, res) => {
 
 // Contact POST route
 app.post('/contact', (req, res) => {
-    const { name, message } = req.body;
+    const {name, message} = req.body;
     res.send(`Received message from ${name}: ${message}`);
 });
 
@@ -60,7 +72,7 @@ app.get('/api/users', (req, res) => {
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
-    const { name, role, email } = req.body;
+    const {name, role, email} = req.body;
     const newUser = {
         id: Math.floor(Math.random() * 1000),
         name,
@@ -79,9 +91,9 @@ app.put('/api/users/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const index = users.findIndex(u => u.id === id);
     if (index === -1) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json({error: 'User not found'});
     }
-    const { name, role, email } = req.body;
+    const {name, role, email} = req.body;
     if (name !== undefined) users[index].name = name;
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
@@ -97,27 +109,27 @@ app.delete('/api/users/:id', (req, res) => {
     const index = users.findIndex(u => u.id === id);
     if (index !== -1) {
         users.splice(index, 1);
-        res.json({ message: 'User deleted' });
+        res.json({message: 'User deleted'});
     } else {
-        res.status(404).json({ error: 'User not found' });
+        res.status(404).json({error: 'User not found'});
     }
 });
 
 // DELETE /api/users (bulk)
 app.delete('/api/users', (req, res) => {
-    const { ids } = req.body;
+    const {ids} = req.body;
     if (!Array.isArray(ids)) {
-        return res.status(400).json({ error: 'ids must be an array' });
+        return res.status(400).json({error: 'ids must be an array'});
     }
     const initialLength = users.length;
     users = users.filter(u => !ids.includes(u.id));
     const deletedCount = initialLength - users.length;
-    res.json({ message: `Deleted ${deletedCount} users` });
+    res.json({message: `Deleted ${deletedCount} users`});
 });
 
 // -------------------- 404 Handler --------------------
 app.use((req, res) => {
-    res.status(404).json({ error: 'Not Found' });
+    res.status(404).json({error: 'Not Found'});
 });
 
 // -------------------- Start Server --------------------
