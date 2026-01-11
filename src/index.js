@@ -96,10 +96,11 @@ app.put('/api/users/:id', (req, res) => {
     if (index === -1) {
         return res.status(404).json({error: 'User not found'});
     }
-    const {name, role, email} = req.body;
+    const {name, role, email, location} = req.body;
     if (name !== undefined) users[index].name = name;
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
+    if (location !== undefined) users[index].location = location;
     res.json({
         message: 'User updated successfully',
         user: users[index],
