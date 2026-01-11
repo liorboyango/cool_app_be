@@ -25,16 +25,16 @@ app.use(cors({
 app.use(express.json()); // Middleware to parse JSON bodies
 
 let users = [
-    {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com'},
-    {id: 2, name: 'Bob', role: 'user', email: 'bob@example.com'},
-    {id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com'},
-    {id: 4, name: 'David', role: 'admin', email: 'david@example.com'},
-    {id: 5, name: 'Eve', role: 'user', email: 'eve@example.com'},
-    {id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com'},
-    {id: 7, name: 'Grace', role: 'user', email: 'grace@example.com'},
-    {id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com'},
-    {id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com'},
-    {id: 10, name: 'Jack', role: 'user', email: 'jack@example.com'},
+    {id: 1, name: 'Alice', role: 'moderator', email: 'alice@example.com', location: 'City 1', tags: ['moderator']},
+    {id: 2, name: 'Bob', role: 'editor', email: 'bob@example.com', location: 'City 2', tags: ['editor']},
+    {id: 3, name: 'Charlie', role: 'voter', email: 'charlie@example.com', location: 'City 3', tags: ['voter']},
+    {id: 4, name: 'David', role: 'moderator', email: 'david@example.com', location: 'City 4', tags: ['moderator']},
+    {id: 5, name: 'Eve', role: 'editor', email: 'eve@example.com', location: 'City 5', tags: ['editor']},
+    {id: 6, name: 'Frank', role: 'voter', email: 'frank@example.com', location: 'City 6', tags: ['voter']},
+    {id: 7, name: 'Grace', role: 'moderator', email: 'grace@example.com', location: 'City 7', tags: ['moderator']},
+    {id: 8, name: 'Hank', role: 'editor', email: 'hank@example.com', location: 'City 8', tags: ['editor']},
+    {id: 9, name: 'Ivy', role: 'voter', email: 'ivy@example.com', location: 'City 9', tags: ['voter']},
+    {id: 10, name: 'Jack', role: 'moderator', email: 'jack@example.com', location: 'City 10', tags: ['moderator']},
 ];
 
 // -------------------- Basic HTML/Text Routes --------------------
@@ -78,6 +78,8 @@ app.post('/api/users', (req, res) => {
         name,
         role,
         email,
+        location: 'New City',
+        tags: [role],
     };
     users.push(newUser);
     res.status(201).json({
@@ -97,6 +99,7 @@ app.put('/api/users/:id', (req, res) => {
     if (name !== undefined) users[index].name = name;
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
+    users[index].tags = [users[index].role]; // update tags
     res.json({
         message: 'User updated successfully',
         user: users[index],
