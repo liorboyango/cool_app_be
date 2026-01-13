@@ -1,7 +1,15 @@
 const express = require('express');
 const cors = require('cors'); // ✅ add this
+const axios = require('axios');
+const rateLimit = require('express-rate-limit');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Rate limiter for proxy
+const proxyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+});
 
 // Enable CORS
 const allowedOrigins = [
@@ -23,6 +31,9 @@ app.use(cors({
 }));
 
 app.use(express.json()); // Middleware to parse JSON bodies
+
+// Apply rate limiter to proxy route
+app.use('/api/proxy', proxyLimiter);
 
 let users = [
     {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com'},
@@ -125,6 +136,39 @@ app.delete('/api/users', (req, res) => {
     users = users.filter(u => !ids.includes(u.id));
     const deletedCount = initialLength - users.length;
     res.json({message: `Deleted ${deletedCount} users`});
+});
+
+// GET /api/proxy?url=<base64_encoded_url>
+app.get('/api/proxy', async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).json({ error: 'URL parameter is required' });
+  }
+  try {
+    const decodedUrl = Buffer.from(url, 'base64').toString('utf-8');
+    // Validate URL
+    const urlObj = new URL(decodedUrl);
+    const allowedDomains = ['i.pravatar.cc'];
+    if (!allowedDomains.includes(urlObj.hostname)) {
+      return res.status(403).json({ error: 'Domain not allowed' });
+    }
+    // Fetch the image
+    const response = await axios.get(decodedUrl, {
+      responseType: 'arraybuffer',
+      timeout: 5000,
+      maxContentLength: 5 * 1024 * 1024, // 5MB limit
+    });
+    // Set headers
+    res.set({
+      'Content-Type': response.headers['content-type'] || 'image/jpeg',
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.send(Buffer.from(response.data));
+  } catch (error) {
+    console.error('Proxy error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch image' });
+  }
 });
 
 // -------------------- 404 Handler --------------------
