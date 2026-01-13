@@ -2,8 +2,12 @@ const express = require('express');
 const cors = require('cors'); // ✅ add this
 const axios = require('axios');
 const rateLimit = require('express-rate-limit');
+const NodeCache = require('node-cache');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Cache for images
+const cache = new NodeCache({ stdTTL: 3600 }); // 1 hour TTL
 
 // Rate limiter for proxy
 const proxyLimiter = rateLimit({
@@ -149,14 +153,29 @@ app.get('/api/proxy', async (req, res) => {
     // Validate URL
     const urlObj = new URL(decodedUrl);
     const allowedDomains = ['i.pravatar.cc'];
-    if (!allowedDomains.includes(urlObj.hostname)) {
-      return res.status(403).json({ error: 'Domain not allowed' });
+    if (!allowedDomains.includes(urlObj.hostname) || urlObj.protocol !== 'https:') {
+      return res.status(403).json({ error: 'Domain not allowed or not HTTPS' });
+    }
+    // Check cache
+    const cached = cache.get(decodedUrl);
+    if (cached) {
+      res.set({
+        'Content-Type': cached.contentType || 'image/jpeg',
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',
+      });
+      return res.send(Buffer.from(cached.data));
     }
     // Fetch the image
     const response = await axios.get(decodedUrl, {
       responseType: 'arraybuffer',
       timeout: 5000,
       maxContentLength: 5 * 1024 * 1024, // 5MB limit
+    });
+    // Cache the response
+    cache.set(decodedUrl, {
+      data: response.data,
+      contentType: response.headers['content-type'],
     });
     // Set headers
     res.set({
