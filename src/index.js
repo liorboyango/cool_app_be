@@ -96,16 +96,16 @@ app.get('/proxy/image', proxyLimiter, async (req, res) => {
 });
 
 let users = [
-    {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com'},
-    {id: 2, name: 'Bob', role: 'user', email: 'bob@example.com'},
-    {id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com'},
-    {id: 4, name: 'David', role: 'admin', email: 'david@example.com'},
-    {id: 5, name: 'Eve', role: 'user', email: 'eve@example.com'},
-    {id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com'},
-    {id: 7, name: 'Grace', role: 'user', email: 'grace@example.com'},
-    {id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com'},
-    {id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com'},
-    {id: 10, name: 'Jack', role: 'user', email: 'jack@example.com'},
+    {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com', gender: 'female'},
+    {id: 2, name: 'Bob', role: 'user', email: 'bob@example.com', gender: 'male'},
+    {id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com', gender: 'male'},
+    {id: 4, name: 'David', role: 'admin', email: 'david@example.com', gender: 'male'},
+    {id: 5, name: 'Eve', role: 'user', email: 'eve@example.com', gender: 'female'},
+    {id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com', gender: 'male'},
+    {id: 7, name: 'Grace', role: 'user', email: 'grace@example.com', gender: 'female'},
+    {id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com', gender: 'male'},
+    {id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com', gender: 'female'},
+    {id: 10, name: 'Jack', role: 'user', email: 'jack@example.com', gender: 'male'},
 ];
 
 // -------------------- Basic HTML/Text Routes --------------------
@@ -138,17 +138,32 @@ app.get('/api/status', (req, res) => {
 
 // GET /api/users
 app.get('/api/users', (req, res) => {
-    res.json(users);
+    const { sort, gender } = req.query;
+    let filteredUsers = [...users];
+    if (gender && gender !== 'all') {
+        filteredUsers = filteredUsers.filter(u => u.gender === gender);
+    }
+    if (sort) {
+        const [field, order] = sort.split(':');
+        if (field === 'name' && (order === 'asc' || order === 'desc')) {
+            filteredUsers.sort((a, b) => order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+        }
+    }
+    res.json(filteredUsers);
 });
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
-    const {name, role, email} = req.body;
+    const {name, role, email, gender} = req.body;
+    if (!gender || !['male', 'female'].includes(gender)) {
+        return res.status(400).json({error: 'Invalid gender'});
+    }
     const newUser = {
         id: Math.floor(Math.random() * 1000),
         name,
         role,
         email,
+        gender,
     };
     users.push(newUser);
     res.status(201).json({
@@ -164,10 +179,14 @@ app.put('/api/users/:id', (req, res) => {
     if (index === -1) {
         return res.status(404).json({error: 'User not found'});
     }
-    const {name, role, email} = req.body;
+    const {name, role, email, gender} = req.body;
+    if (gender && !['male', 'female'].includes(gender)) {
+        return res.status(400).json({error: 'Invalid gender'});
+    }
     if (name !== undefined) users[index].name = name;
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
+    if (gender !== undefined) users[index].gender = gender;
     res.json({
         message: 'User updated successfully',
         user: users[index],
