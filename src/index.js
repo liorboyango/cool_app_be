@@ -68,6 +68,12 @@ function isValidImageUrl(url) {
   }
 }
 
+// Function to validate phone number (E.164 format)
+function isValidPhoneNumber(phone) {
+  const e164Regex = /^\+?[1-9]\d{1,14}$/;
+  return e164Regex.test(phone);
+}
+
 // Proxy endpoint for images
 app.get('/proxy/image', proxyLimiter, async (req, res) => {
   const { url } = req.query;
@@ -96,16 +102,16 @@ app.get('/proxy/image', proxyLimiter, async (req, res) => {
 });
 
 let users = [
-    {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com', gender: 'female'},
-    {id: 2, name: 'Bob', role: 'user', email: 'bob@example.com', gender: 'male'},
+    {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com', gender: 'female', phoneNumber: '+1234567890'},
+    {id: 2, name: 'Bob', role: 'user', email: 'bob@example.com', gender: 'male', phoneNumber: '+1987654321'},
     {id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com', gender: 'male'},
-    {id: 4, name: 'David', role: 'admin', email: 'david@example.com', gender: 'male'},
+    {id: 4, name: 'David', role: 'admin', email: 'david@example.com', gender: 'male', phoneNumber: '+1555123456'},
     {id: 5, name: 'Eve', role: 'user', email: 'eve@example.com', gender: 'female'},
-    {id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com', gender: 'male'},
-    {id: 7, name: 'Grace', role: 'user', email: 'grace@example.com', gender: 'female'},
+    {id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com', gender: 'male', phoneNumber: '+1444987654'},
+    {id: 7, name: 'Grace', role: 'user', email: 'grace@example.com', gender: 'female', phoneNumber: '+1777888999'},
     {id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com', gender: 'male'},
-    {id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com', gender: 'female'},
-    {id: 10, name: 'Jack', role: 'user', email: 'jack@example.com', gender: 'male'},
+    {id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com', gender: 'female', phoneNumber: '+1888123456'},
+    {id: 10, name: 'Jack', role: 'user', email: 'jack@example.com', gender: 'male', phoneNumber: '+1999765432'},
 ];
 
 // -------------------- Basic HTML/Text Routes --------------------
@@ -154,9 +160,12 @@ app.get('/api/users', (req, res) => {
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
-    const {name, role, email, gender} = req.body;
+    const {name, role, email, gender, phoneNumber} = req.body;
     if (!gender || !['male', 'female'].includes(gender)) {
         return res.status(400).json({error: 'Invalid gender'});
+    }
+    if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
+        return res.status(400).json({error: 'Invalid phone number format (E.164)'});
     }
     const newUser = {
         id: Math.floor(Math.random() * 1000),
@@ -164,6 +173,7 @@ app.post('/api/users', (req, res) => {
         role,
         email,
         gender,
+        phoneNumber: phoneNumber || null,
     };
     users.push(newUser);
     res.status(201).json({
@@ -179,14 +189,18 @@ app.put('/api/users/:id', (req, res) => {
     if (index === -1) {
         return res.status(404).json({error: 'User not found'});
     }
-    const {name, role, email, gender} = req.body;
+    const {name, role, email, gender, phoneNumber} = req.body;
     if (gender && !['male', 'female'].includes(gender)) {
         return res.status(400).json({error: 'Invalid gender'});
+    }
+    if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
+        return res.status(400).json({error: 'Invalid phone number format (E.164)'});
     }
     if (name !== undefined) users[index].name = name;
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
     if (gender !== undefined) users[index].gender = gender;
+    if (phoneNumber !== undefined) users[index].phoneNumber = phoneNumber;
     res.json({
         message: 'User updated successfully',
         user: users[index],
