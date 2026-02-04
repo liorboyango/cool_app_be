@@ -14,6 +14,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
     },
   },
 }));
@@ -70,8 +71,17 @@ function isValidImageUrl(url) {
 
 // Function to validate phone number (E.164 format)
 function isValidPhoneNumber(phone) {
-  const e164Regex = /^\+?[1-9]\d{1,14}$/;
+  const e164Regex = /^\/?[1-9]\d{1,14}$/;
   return e164Regex.test(phone);
+}
+
+// Function to validate name
+function isValidName(name) {
+  if (!name || typeof name !== 'string') return false;
+  if (name.length < 1 || name.length > 50) return false;
+  // Basic XSS check
+  if (/<script/i.test(name)) return false;
+  return true;
 }
 
 // Proxy endpoint for images
@@ -102,16 +112,16 @@ app.get('/proxy/image', proxyLimiter, async (req, res) => {
 });
 
 let users = [
-    {id: 1, name: 'Alice', role: 'admin', email: 'alice@example.com', gender: 'female', phoneNumber: '+1234567890'},
-    {id: 2, name: 'Bob', role: 'user', email: 'bob@example.com', gender: 'male', phoneNumber: '+1987654321'},
-    {id: 3, name: 'Charlie', role: 'user', email: 'charlie@example.com', gender: 'male'},
-    {id: 4, name: 'David', role: 'admin', email: 'david@example.com', gender: 'male', phoneNumber: '+1555123456'},
-    {id: 5, name: 'Eve', role: 'user', email: 'eve@example.com', gender: 'female'},
-    {id: 6, name: 'Frank', role: 'moderator', email: 'frank@example.com', gender: 'male', phoneNumber: '+1444987654'},
-    {id: 7, name: 'Grace', role: 'user', email: 'grace@example.com', gender: 'female', phoneNumber: '+1777888999'},
-    {id: 8, name: 'Hank', role: 'admin', email: 'hank@example.com', gender: 'male'},
-    {id: 9, name: 'Ivy', role: 'user', email: 'ivy@example.com', gender: 'female', phoneNumber: '+1888123456'},
-    {id: 10, name: 'Jack', role: 'user', email: 'jack@example.com', gender: 'male', phoneNumber: '+1999765432'},
+    {id: 1, firstName: 'Alice', lastName: 'Smith', role: 'admin', email: 'alice@example.com', gender: 'female', phoneNumber: '+1234567890'},
+    {id: 2, firstName: 'Bob', lastName: 'Johnson', role: 'user', email: 'bob@example.com', gender: 'male', phoneNumber: '+1987654321'},
+    {id: 3, firstName: 'Charlie', lastName: 'Brown', role: 'user', email: 'charlie@example.com', gender: 'male'},
+    {id: 4, firstName: 'David', lastName: 'Williams', role: 'admin', email: 'david@example.com', gender: 'male', phoneNumber: '+1555123456'},
+    {id: 5, firstName: 'Eve', lastName: 'Davis', role: 'user', email: 'eve@example.com', gender: 'female'},
+    {id: 6, firstName: 'Frank', lastName: 'Miller', role: 'moderator', email: 'frank@example.com', gender: 'male', phoneNumber: '+1444987654'},
+    {id: 7, firstName: 'Grace', lastName: 'Garcia', role: 'user', email: 'grace@example.com', gender: 'female', phoneNumber: '+1777888999'},
+    {id: 8, firstName: 'Hank', lastName: 'Martinez', role: 'admin', email: 'hank@example.com', gender: 'male'},
+    {id: 9, firstName: 'Ivy', lastName: 'Lopez', role: 'user', email: 'ivy@example.com', gender: 'female', phoneNumber: '+1888123456'},
+    {id: 10, firstName: 'Jack', lastName: 'Gonzalez', role: 'user', email: 'jack@example.com', gender: 'male', phoneNumber: '+1999765432'},
 ];
 
 // -------------------- Basic HTML/Text Routes --------------------
@@ -151,8 +161,8 @@ app.get('/api/users', (req, res) => {
     }
     if (sort) {
         const [field, order] = sort.split(':');
-        if (field === 'name' && (order === 'asc' || order === 'desc')) {
-            filteredUsers.sort((a, b) => order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+        if (field === 'firstName' && (order === 'asc' || order === 'desc')) {
+            filteredUsers.sort((a, b) => order === 'asc' ? a.firstName.localeCompare(b.firstName) : b.firstName.localeCompare(a.firstName));
         }
     }
     res.json(filteredUsers);
@@ -160,7 +170,10 @@ app.get('/api/users', (req, res) => {
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
-    const {name, role, email, gender, phoneNumber} = req.body;
+    const {firstName, lastName, role, email, gender, phoneNumber} = req.body;
+    if (!isValidName(firstName) || !isValidName(lastName)) {
+        return res.status(400).json({error: 'Invalid first or last name'});
+    }
     if (!gender || !['male', 'female'].includes(gender)) {
         return res.status(400).json({error: 'Invalid gender'});
     }
@@ -169,7 +182,8 @@ app.post('/api/users', (req, res) => {
     }
     const newUser = {
         id: Math.floor(Math.random() * 1000),
-        name,
+        firstName,
+        lastName,
         role,
         email,
         gender,
@@ -189,14 +203,21 @@ app.put('/api/users/:id', (req, res) => {
     if (index === -1) {
         return res.status(404).json({error: 'User not found'});
     }
-    const {name, role, email, gender, phoneNumber} = req.body;
+    const {firstName, lastName, role, email, gender, phoneNumber} = req.body;
+    if (firstName !== undefined && !isValidName(firstName)) {
+        return res.status(400).json({error: 'Invalid first name'});
+    }
+    if (lastName !== undefined && !isValidName(lastName)) {
+        return res.status(400).json({error: 'Invalid last name'});
+    }
     if (gender && !['male', 'female'].includes(gender)) {
         return res.status(400).json({error: 'Invalid gender'});
     }
     if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
         return res.status(400).json({error: 'Invalid phone number format (E.164)'});
     }
-    if (name !== undefined) users[index].name = name;
+    if (firstName !== undefined) users[index].firstName = firstName;
+    if (lastName !== undefined) users[index].lastName = lastName;
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
     if (gender !== undefined) users[index].gender = gender;
