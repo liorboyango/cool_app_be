@@ -14,7 +14,6 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
     },
   },
 }));
@@ -71,17 +70,24 @@ function isValidImageUrl(url) {
 
 // Function to validate phone number (E.164 format)
 function isValidPhoneNumber(phone) {
-  const e164Regex = /^\/?[1-9]\d{1,14}$/;
+  const e164Regex = /^\+?[1-9]\d{1,14}$/;
   return e164Regex.test(phone);
 }
 
 // Function to validate name
 function isValidName(name) {
   if (!name || typeof name !== 'string') return false;
-  if (name.length < 1 || name.length > 50) return false;
-  // Basic XSS check
-  if (/<script/i.test(name)) return false;
+  const trimmed = name.trim();
+  if (trimmed.length < 1 || trimmed.length > 50) return false;
+  // XSS check for HTML tags
+  if (/<[^>]*>/i.test(trimmed)) return false;
   return true;
+}
+
+// Function to validate email
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 // Proxy endpoint for images
@@ -163,6 +169,14 @@ app.get('/api/users', (req, res) => {
         const [field, order] = sort.split(':');
         if (field === 'firstName' && (order === 'asc' || order === 'desc')) {
             filteredUsers.sort((a, b) => order === 'asc' ? a.firstName.localeCompare(b.firstName) : b.firstName.localeCompare(a.firstName));
+        } else if (field === 'lastName' && (order === 'asc' || order === 'desc')) {
+            filteredUsers.sort((a, b) => order === 'asc' ? a.lastName.localeCompare(b.lastName) : b.lastName.localeCompare(a.lastName));
+        } else if (field === 'fullName' && (order === 'asc' || order === 'desc')) {
+            filteredUsers.sort((a, b) => {
+                const fullA = `${a.firstName} ${a.lastName}`;
+                const fullB = `${b.firstName} ${b.lastName}`;
+                return order === 'asc' ? fullA.localeCompare(fullB) : fullB.localeCompare(fullA);
+            });
         }
     }
     res.json(filteredUsers);
@@ -174,6 +188,9 @@ app.post('/api/users', (req, res) => {
     if (!isValidName(firstName) || !isValidName(lastName)) {
         return res.status(400).json({error: 'Invalid first or last name'});
     }
+    if (!isValidEmail(email)) {
+        return res.status(400).json({error: 'Invalid email format'});
+    }
     if (!gender || !['male', 'female'].includes(gender)) {
         return res.status(400).json({error: 'Invalid gender'});
     }
@@ -182,8 +199,8 @@ app.post('/api/users', (req, res) => {
     }
     const newUser = {
         id: Math.floor(Math.random() * 1000),
-        firstName,
-        lastName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         role,
         email,
         gender,
@@ -210,14 +227,17 @@ app.put('/api/users/:id', (req, res) => {
     if (lastName !== undefined && !isValidName(lastName)) {
         return res.status(400).json({error: 'Invalid last name'});
     }
+    if (email !== undefined && !isValidEmail(email)) {
+        return res.status(400).json({error: 'Invalid email format'});
+    }
     if (gender && !['male', 'female'].includes(gender)) {
         return res.status(400).json({error: 'Invalid gender'});
     }
     if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
         return res.status(400).json({error: 'Invalid phone number format (E.164)'});
     }
-    if (firstName !== undefined) users[index].firstName = firstName;
-    if (lastName !== undefined) users[index].lastName = lastName;
+    if (firstName !== undefined) users[index].firstName = firstName.trim();
+    if (lastName !== undefined) users[index].lastName = lastName.trim();
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
     if (gender !== undefined) users[index].gender = gender;
