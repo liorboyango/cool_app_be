@@ -1,12 +1,31 @@
-let users = [
-    {id: 1, firstName: 'Alice', lastName: 'Smith', role: 'admin', email: 'alice@example.com', gender: 'female', phoneNumber: '+1234567890', linkedinUrl: 'https://www.linkedin.com/in/alice-smith' },
-    {id: 2, firstName: 'Bob', lastName: 'Johnson', role: 'user', email: 'bob@example.com', gender: 'male', phoneNumber: '+1987654321', linkedinUrl: 'https://www.linkedin.com/in/bob-johnson' },
-    {id: 3, firstName: 'Charlie', lastName: 'Brown', role: 'user', email: 'charlie@example.com', gender: 'male'},
-    {id: 4, firstName: 'David', lastName: 'Williams', role: 'admin', email: 'david@example.com', gender: 'male', phoneNumber: '+1555123456'},
-    {id: 5, firstName: 'Eve', lastName: 'Davis', role: 'user', email: 'eve@example.com', gender: 'female'},
-    {id: 6, firstName: 'Frank', lastName: 'Miller', role: 'moderator', email: 'frank@example.com', gender: 'male', phoneNumber: '+1444987654'},
-    {id: 7, firstName: 'Grace', lastName: 'Garcia', role: 'user', email: 'grace@example.com', gender: 'female', phoneNumber: '+1777888999'},
-    {id: 8, firstName: 'Hank', lastName: 'Martinez', role: 'admin', email: 'hank@example.com', gender: 'male'},
-    {id: 9, firstName: 'Ivy', lastName: 'Lopez', role: 'user', email: 'ivy@example.com', gender: 'female', phoneNumber: '+1888123456'},
-    {id: 10, firstName: 'Jack', lastName: 'Gonzalez', role: 'user', email: 'jack@example.com', gender: 'male', phoneNumber: '+1999765432'},
-];
+// POST /api/users
+app.post('/api/users', (req, res) => {
+    const {firstName, lastName, role, email, gender, phoneNumber, linkedinUrl} = req.body;
+    if (!isValidName(firstName) || !isValidName(lastName)) {
+        return res.status(400).json({error: 'Invalid first or last name'});
+    }
+    if (!isValidEmail(email)) {
+        return res.status(400).json({error: 'Invalid email format'});
+    }
+    if (!gender || !['male', 'female'].includes(gender)) {
+        return res.status(400).json({error: 'Invalid gender'});
+    }
+    if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
+        return res.status(400).json({error: 'Invalid phone number format (E.164)'});
+    }
+    const newUser = {
+        id: Math.floor(Math.random() * 1000),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        role,
+        email,
+        gender,
+        phoneNumber: phoneNumber || null,
+        linkedinUrl: linkedinUrl || null,
+    };
+    users.push(newUser);
+    res.status(201).json({
+        message: 'User created successfully',
+        user: newUser,
+    });
+});
