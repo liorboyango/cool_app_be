@@ -1,35 +1,43 @@
-// PUT /api/users/:id
-app.put('/api/users/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const index = users.findIndex(u => u.id === id);
-    if (index === -1) {
-        return res.status(404).json({error: 'User not found'});
-    }
-    const {firstName, lastName, role, email, gender, phoneNumber, linkedinUrl} = req.body;
-    if (firstName !== undefined && !isValidName(firstName)) {
-        return res.status(400).json({error: 'Invalid first name'});
-    }
-    if (lastName !== undefined && !isValidName(lastName)) {
-        return res.status(400).json({error: 'Invalid last name'});
-    }
-    if (email !== undefined && !isValidEmail(email)) {
-        return res.status(400).json({error: 'Invalid email format'});
-    }
-    if (gender && !['male', 'female'].includes(gender)) {
-        return res.status(400).json({error: 'Invalid gender'});
-    }
-    if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
-        return res.status(400).json({error: 'Invalid phone number format (E.164)'});
-    }
-    if (firstName !== undefined) users[index].firstName = firstName.trim();
-    if (lastName !== undefined) users[index].lastName = lastName.trim();
-    if (role !== undefined) users[index].role = role;
-    if (email !== undefined) users[index].email = email;
-    if (gender !== undefined) users[index].gender = gender;
-    if (phoneNumber !== undefined) users[index].phoneNumber = phoneNumber;
-    if (linkedinUrl !== undefined) users[index].linkedinUrl = linkedinUrl;
-    res.json({
-        message: 'User updated successfully',
-        user: users[index],
+// Function to validate LinkedIn URL
+function isValidLinkedinUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsedUrl = new URL(url);
+    // Only allow HTTPS LinkedIn URLs
+    if (parsedUrl.protocol !== 'https:') return false;
+    // Only allow linkedin.com domain
+    if (!['www.linkedin.com', 'linkedin.com'].includes(parsedUrl.hostname)) return false;
+    // Max length check
+    if (url.length > 256) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Proxy endpoint for images
+app.get('/proxy/image', proxyLimiter, async (req, res) => {
+  const { url } = req.query;
+  if (!url || !isValidImageUrl(url)) {
+    return res.status(400).json({ error: 'Invalid or missing URL' });
+  }
+  try {
+    const response = await axios.get(url, {
+      responseType: 'stream',
+      timeout: 5000,
+      httpsAgent: new https.Agent({ rejectUnauthorized: true }),
+      maxContentLength: 2 * 1024 * 1024, // 2MB limit
     });
+    res.set({
+      'Content-Type': response.headers['content-type'],
+      'Content-Length': response.headers['content-length'],
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    response.data.pipe(res);
+  } catch (error) {
+    console.error('Proxy error:', error.message);
+    res.status(502).json({ error: 'Failed to fetch image' });
+  }
 });
