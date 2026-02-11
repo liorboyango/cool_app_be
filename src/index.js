@@ -90,6 +90,30 @@ function isValidEmail(email) {
   return emailRegex.test(email);
 }
 
+// Function to validate LinkedIn URL
+function isValidLinkedInUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsedUrl = new URL(url);
+    // Must be https protocol
+    if (parsedUrl.protocol !== 'https:') {
+      return false;
+    }
+    // Must be linkedin.com domain
+    const hostname = parsedUrl.hostname.toLowerCase();
+    if (!hostname.endsWith('linkedin.com') && hostname !== 'linkedin.com') {
+      return false;
+    }
+    // Max length 512 chars
+    if (url.length > 512) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // Proxy endpoint for images
 app.get('/proxy/image', proxyLimiter, async (req, res) => {
   const { url } = req.query;
@@ -118,11 +142,11 @@ app.get('/proxy/image', proxyLimiter, async (req, res) => {
 });
 
 let users = [
-    {id: 1, firstName: 'Alice', lastName: 'Smith', role: 'admin', email: 'alice@example.com', gender: 'female', phoneNumber: '+1234567890'},
+    {id: 1, firstName: 'Alice', lastName: 'Smith', role: 'admin', email: 'alice@example.com', gender: 'female', phoneNumber: '+1234567890', linkedinUrl: 'https://www.linkedin.com/in/alicesmith'},
     {id: 2, firstName: 'Bob', lastName: 'Johnson', role: 'user', email: 'bob@example.com', gender: 'male', phoneNumber: '+1987654321'},
-    {id: 3, firstName: 'Charlie', lastName: 'Brown', role: 'user', email: 'charlie@example.com', gender: 'male'},
+    {id: 3, firstName: 'Charlie', lastName: 'Brown', role: 'user', email: 'charlie@example.com', gender: 'male', linkedinUrl: 'https://www.linkedin.com/in/charliebrown'},
     {id: 4, firstName: 'David', lastName: 'Williams', role: 'admin', email: 'david@example.com', gender: 'male', phoneNumber: '+1555123456'},
-    {id: 5, firstName: 'Eve', lastName: 'Davis', role: 'user', email: 'eve@example.com', gender: 'female'},
+    {id: 5, firstName: 'Eve', lastName: 'Davis', role: 'user', email: 'eve@example.com', gender: 'female', linkedinUrl: 'https://www.linkedin.com/in/evedavis'},
     {id: 6, firstName: 'Frank', lastName: 'Miller', role: 'moderator', email: 'frank@example.com', gender: 'male', phoneNumber: '+1444987654'},
     {id: 7, firstName: 'Grace', lastName: 'Garcia', role: 'user', email: 'grace@example.com', gender: 'female', phoneNumber: '+1777888999'},
     {id: 8, firstName: 'Hank', lastName: 'Martinez', role: 'admin', email: 'hank@example.com', gender: 'male'},
@@ -184,7 +208,7 @@ app.get('/api/users', (req, res) => {
 
 // POST /api/users
 app.post('/api/users', (req, res) => {
-    const {firstName, lastName, role, email, gender, phoneNumber} = req.body;
+    const {firstName, lastName, role, email, gender, phoneNumber, linkedinUrl} = req.body;
     if (!isValidName(firstName) || !isValidName(lastName)) {
         return res.status(400).json({error: 'Invalid first or last name'});
     }
@@ -197,6 +221,9 @@ app.post('/api/users', (req, res) => {
     if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
         return res.status(400).json({error: 'Invalid phone number format (E.164)'});
     }
+    if (linkedinUrl && !isValidLinkedInUrl(linkedinUrl)) {
+        return res.status(400).json({error: 'Invalid LinkedIn URL format (must be https://linkedin.com)'});
+    }
     const newUser = {
         id: Math.floor(Math.random() * 1000),
         firstName: firstName.trim(),
@@ -205,6 +232,7 @@ app.post('/api/users', (req, res) => {
         email,
         gender,
         phoneNumber: phoneNumber || null,
+        linkedinUrl: linkedinUrl || null,
     };
     users.push(newUser);
     res.status(201).json({
@@ -220,7 +248,7 @@ app.put('/api/users/:id', (req, res) => {
     if (index === -1) {
         return res.status(404).json({error: 'User not found'});
     }
-    const {firstName, lastName, role, email, gender, phoneNumber} = req.body;
+    const {firstName, lastName, role, email, gender, phoneNumber, linkedinUrl} = req.body;
     if (firstName !== undefined && !isValidName(firstName)) {
         return res.status(400).json({error: 'Invalid first name'});
     }
@@ -236,12 +264,16 @@ app.put('/api/users/:id', (req, res) => {
     if (phoneNumber && !isValidPhoneNumber(phoneNumber)) {
         return res.status(400).json({error: 'Invalid phone number format (E.164)'});
     }
+    if (linkedinUrl && !isValidLinkedInUrl(linkedinUrl)) {
+        return res.status(400).json({error: 'Invalid LinkedIn URL format (must be https://linkedin.com)'});
+    }
     if (firstName !== undefined) users[index].firstName = firstName.trim();
     if (lastName !== undefined) users[index].lastName = lastName.trim();
     if (role !== undefined) users[index].role = role;
     if (email !== undefined) users[index].email = email;
     if (gender !== undefined) users[index].gender = gender;
     if (phoneNumber !== undefined) users[index].phoneNumber = phoneNumber;
+    if (linkedinUrl !== undefined) users[index].linkedinUrl = linkedinUrl;
     res.json({
         message: 'User updated successfully',
         user: users[index],
